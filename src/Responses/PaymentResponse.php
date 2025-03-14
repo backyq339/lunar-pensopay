@@ -61,7 +61,7 @@ class PaymentResponse
         $this->callbackUrl = $object?->callback_url;
         $this->successUrl = $object?->success_url;
         $this->cancelUrl = $object?->cancel_url;
-        $this->expiresAt = $object?->expires_at;
+        //$this->expiresAt = $object?->expires_at;
     }
 
     public function isSuccessful(): bool
@@ -148,9 +148,10 @@ class PaymentResponse
     {
         return $this->cancelUrl;
     }
-
+    /*
     public function getExpiresAt(): ?string
     {
         return $this->expiresAt;
     }
+    */
 }
