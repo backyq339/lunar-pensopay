@@ -42,8 +42,8 @@ class PensopayPaymentType extends AbstractPayment
 
         $paymentResponse = $this->paymentService->createPayment(
             $this->order,
-            route('checkout.continue', ['id' => $this->order->id]),
-            route('checkout.view', ['id' => $this->order->id]),
+            route('checkout.continue', ['reference' => $this->order->reference]),
+            route('checkout.view', ['reference' => $this->order->reference]),
             route('webhook-client-pensopay-webhook'),
         );
 
