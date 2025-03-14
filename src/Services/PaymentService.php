@@ -78,23 +78,22 @@ class PaymentService extends BaseClient
      */
     public function createPayment(
         Order $order,
-        FacilitatorEnum $facilitator,
-        string $successUrl = null,
-        string $cancelUrl = null,
-        string $callbackUrl = null,
+        $successUrl = null,
+        $cancelUrl = null,
+        $callbackUrl = null,
     ): PaymentResponse {
         //Pensopay requires at least 4 characters in order id
-        $orderIdPrefix = config('pensopay.testmode') ? 'test' : 'live';
-        //ToDo Still for testing
-        $orderId = sprintf('%s-%s-%s', $orderIdPrefix, rand(1, 1000000), $order->id);
+        $orderId = $order->reference;
+        if (config('pensopay.testmode')) {
+            $orderId .= '_test';
+        }
 
         $payload = [
             'order_id' => $orderId,
-            'facilitator' => $facilitator->value,
             'amount' => $order->total->value,
             'currency' => $order->currency_code,
             'testmode' => config('pensopay.testmode'),
-            'autocapture' => true,
+            'autocapture' => false,
         ];
 
         if ($successUrl != null) {

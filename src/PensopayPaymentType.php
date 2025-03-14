@@ -2,15 +2,17 @@
 
 namespace Gamevault\Pensopay;
 
+use Lunar\Models\Transaction;
+use Lunar\Events\PaymentAttemptEvent;
+use Lunar\PaymentTypes\AbstractPayment;
 use Gamevault\Pensopay\Enums\FacilitatorEnum;
 use Gamevault\Pensopay\Enums\PaymentStateEnum;
-use Gamevault\Pensopay\Responses\PaymentResponse;
 use Gamevault\Pensopay\Services\PaymentService;
-use Lunar\Base\DataTransferObjects\PaymentAuthorize;
-use Lunar\Base\DataTransferObjects\PaymentCapture;
+use Gamevault\Pensopay\Responses\PaymentResponse;
 use Lunar\Base\DataTransferObjects\PaymentRefund;
-use Lunar\Models\Transaction;
-use Lunar\PaymentTypes\AbstractPayment;
+use Lunar\Base\DataTransferObjects\PaymentCapture;
+use Lunar\Base\DataTransferObjects\PaymentAuthorize;
+use Lunar\Exceptions\DisallowMultipleCartOrdersException;
 
 class PensopayPaymentType extends AbstractPayment
 {
@@ -20,26 +22,29 @@ class PensopayPaymentType extends AbstractPayment
 
     public function authorize(): PaymentAuthorize
     {
-        if (! $this->order) {
-            if (! $this->order = $this->cart->order) {
-                $this->order = $this->cart->createOrder();
-            }
+        if ($this->order && $this->order->placed_at) {
+            return null;
         }
 
-        if ($this->order->placed_at) {
-            return new PaymentAuthorize(
+        try {
+            $this->order = $this->cart->createOrder();
+        } catch (DisallowMultipleCartOrdersException $e) {
+            $failure = new PaymentAuthorize(
                 success: false,
-                message: 'This order has already been placed',
+                message: $e->getMessage(),
+                orderId: $this->order?->id,
+                paymentType: 'PensoPay'
             );
-        }
+            PaymentAttemptEvent::dispatch($failure);
 
-        if (! isset($this->data['facilitator'])) {
-            $this->data['facilitator'] = FacilitatorEnum::Creditcard;
+            return $failure;
         }
 
         $paymentResponse = $this->paymentService->createPayment(
             $this->order,
-            $this->data['facilitator']
+            route('checkout.continue', ['id' => $this->order->id]),
+            route('checkout.view', ['id' => $this->order->id]),
+            route('webhook-client-pensopay-webhook'),
         );
 
         if (in_array($paymentResponse->getState(), [
@@ -136,7 +141,7 @@ class PensopayPaymentType extends AbstractPayment
                 ],
                 'captured' => $paymentResponse->getCaptured(),
                 'refunded' => $paymentResponse->getRefunded(),
-                'expires_at' => $paymentResponse->getExpiresAt(),
+                //'expires_at' => $paymentResponse->getExpiresAt(),
                 'pensopay_reference' => $paymentResponse->getReference(),
                 'autocapture' => $paymentResponse->isAutoCapture(),
                 'testmode' => $paymentResponse->isTestMode(),
