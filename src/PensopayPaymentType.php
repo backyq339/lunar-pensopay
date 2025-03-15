@@ -58,13 +58,13 @@ class PensopayPaymentType extends AbstractPayment
         }
 
         $this->storeTransaction($paymentResponse);
-
+        /*
         if ($paymentResponse->isSuccessful()) {
             $this->order->update([
                 'placed_at' => now(),
             ]);
         }
-
+        */
         if ($this->cart) {
             if (! $this->cart->meta) {
                 $this->cart->update([

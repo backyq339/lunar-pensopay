@@ -24,6 +24,12 @@ class ProcessPensopayCallbackJob extends ProcessWebhookJob
             'captured' => 'capture ',
         };
 
+        if ($paymentType == 'authorized' && !$previousTransaction->order->placed_at) {
+            $previousTransaction->order->update([
+                'placed_at' => now(),
+            ]);
+        }
+
         $previousTransaction->order->transactions()->create([
             'parent_transaction_id' => $previousTransaction->id,
             'success' => true,
