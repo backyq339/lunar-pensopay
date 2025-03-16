@@ -22,9 +22,9 @@ class ProcessPensopayCallbackJob extends ProcessWebhookJob
 
     private function storeTransaction(Transaction $previousTransaction, array $payload)
     {
-        $paymentType = match ($payload['state']) {
-            'pending', 'authorized' => 'intent',
-            'captured' => 'capture ',
+        $paymentType = match ($payload['event']) {
+            'payment.authorized' => 'intent',
+            'payment.captured' => 'capture',
         };
 
         if (($paymentType == 'authorized' || $paymentType == 'intent') && !$previousTransaction->order->placed_at) {
@@ -38,26 +38,26 @@ class ProcessPensopayCallbackJob extends ProcessWebhookJob
             'success' => true,
             'type' => $paymentType,
             'driver' => 'pensopay',
-            'amount' => $payload['amount'],
-            'reference' => $payload['id'],
-            'status' => $payload['state'],
+            'amount' => $payload['resource']['amount'],
+            'reference' => $payload['resource']['id'],
+            'status' => $payload['event'],
             'notes' => '',
-            'card_type' => $payload['payment_details']['brand'],
-            'last_four' => $payload['payment_details']['card_last4'],
-            'captured_at' => $payload['state'] == 'captured' ? now() : null,
+            'card_type' => $payload['resource']['payment_details']['brand'],
+            'last_four' => $payload['resource']['payment_details']['card_last4'],
+            'captured_at' => $payload['event'] == 'payment.captured' ? now() : null,
             'meta' => [
-                'captured' => $payload['captured'],
-                'refunded' => $payload['refunded'],
-                'autocapture' => $payload['autocapture'],
-                'testmode' => $payload['testmode'],
-                'facilitator' => $payload['testmode'],
-                'card_bin' => $payload['payment_details']['card_bin'],
-                'exp_year' => $payload['payment_details']['exp_year'],
-                'exp_month' => $payload['payment_details']['exp_month'],
-                '3d_secure' => $payload['payment_details']['3d_secure'],
-                'card_country' => $payload['payment_details']['card_country'],
-                'is_corporate' => $payload['payment_details']['is_corporate'],
-                'customer_country' => $payload['payment_details']['customer_country'],
+                'captured' => $payload['resource']['captured'],
+                'refunded' => $payload['resource']['refunded'],
+                'autocapture' => $payload['resource']['autocapture'],
+                'testmode' => $payload['resource']['testmode'],
+                'facilitator' => $payload['resource']['testmode'],
+                'card_bin' => $payload['resource']['payment_details']['bin'],
+                'exp_year' => $payload['resource']['payment_details']['exp_year'],
+                'exp_month' => $payload['resource']['payment_details']['exp_month'],
+                '3d_secure' => $payload['resource']['payment_details']['is_3d_secure'],
+                'card_country' => $payload['resource']['payment_details']['country'],
+                'is_corporate' => $payload['resource']['payment_details']['segment'],
+                'customer_country' => $payload['resource']['payment_details']['customer_country'],
             ],
         ]);
     }
