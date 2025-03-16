@@ -9,6 +9,9 @@ class ProcessPensopayCallbackJob extends ProcessWebhookJob
 {
     public function handle()
     {
+        \Illuminate\Support\Facades\Log::info('Pensopay webhook payload', [
+            'payload' => $this->webhookCall->payload
+        ]);
         $payload = $this->webhookCall->payload;
 
         /** @var Transaction $transaction */
