@@ -15,7 +15,7 @@ class ProcessPensopayCallbackJob extends ProcessWebhookJob
         $payload = $this->webhookCall->payload;
 
         /** @var Transaction $transaction */
-        $transaction = Transaction::query()->where('reference', $payload['id'])->latest()->first();
+        $transaction = Transaction::query()->where('reference', $payload['resource']['id'])->latest()->first();
 
         $this->storeTransaction($transaction, $payload);
     }
