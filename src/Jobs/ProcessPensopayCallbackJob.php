@@ -43,7 +43,7 @@ class ProcessPensopayCallbackJob extends ProcessWebhookJob
             'status' => $payload['event'],
             'notes' => '',
             'card_type' => $payload['resource']['payment_details']['brand'],
-            'last_four' => $payload['resource']['payment_details']['card_last4'],
+            'last_four' => $payload['resource']['payment_details']['last4'],
             'captured_at' => $payload['event'] == 'payment.captured' ? now() : null,
             'meta' => [
                 'captured' => $payload['resource']['captured'],
