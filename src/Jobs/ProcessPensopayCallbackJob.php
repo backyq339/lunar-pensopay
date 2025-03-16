@@ -23,13 +23,20 @@ class ProcessPensopayCallbackJob extends ProcessWebhookJob
     private function storeTransaction(Transaction $previousTransaction, array $payload)
     {
         $paymentType = match ($payload['event']) {
-            'payment.authorized' => 'intent',
+            'payment.authorized' => 'authorized',
             'payment.captured' => 'capture',
         };
 
-        if (($paymentType == 'authorized' || $paymentType == 'intent') && !$previousTransaction->order->placed_at) {
+        if (($paymentType == 'authorized') && !$previousTransaction->order->placed_at) {
             $previousTransaction->order->update([
                 'placed_at' => now(),
+                'status' => 'requires-capture',
+            ]);
+        }
+
+        if (($paymentType == 'capture') && $previousTransaction->order->placed_at) {
+            $previousTransaction->order->update([
+                'status' => 'captured',
             ]);
         }
 
